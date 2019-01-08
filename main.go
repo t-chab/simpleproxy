@@ -18,9 +18,7 @@ const (
 
 func SetBasicAuth(username, password string, req *http.Request) {
 	if username != "" {
-		fmt.Println("Setting credentials on query for user", username)
 		req.Header.Set(ProxyAuthHeader, fmt.Sprintf("Basic %s", basicAuth(username, password)))
-		fmt.Println("Credentials set on query for user", username)
 	}
 }
 
@@ -36,7 +34,7 @@ func main() {
 	// Define command line args
 	proxyHost := flag.String("host", "localhost",
 		"Hostname or ip address used to listen for incoming connections.")
-	proxyPort := flag.Int("port", 8080,
+	proxyPort := flag.Int("port", 8118,
 		"TCP port used to listen for incoming connections.")
 
 	targetProxyHost := flag.String("targetProxyHost", "",
@@ -54,19 +52,19 @@ func main() {
 	// Fetch command line args
 	flag.Parse()
 
-	targetProxyUrl := GetTargetProxyUrl(*targetProxyHost, *targetProxyPort)
-
-	fmt.Println("Forwarding queries to proxy at " + targetProxyUrl)
-	if proxyLogin != nil && *proxyLogin != "" {
-		fmt.Println("Using user account", *proxyLogin)
-	}
-
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = *isVerbose
 
 	if targetProxyHost == nil || *targetProxyHost == "" {
 		fmt.Println("No target proxy host defined. Will use localhost ...")
 		*targetProxyHost = "localhost"
+	}
+
+	targetProxyUrl := GetTargetProxyUrl(*targetProxyHost, *targetProxyPort)
+
+	fmt.Println("Forwarding queries to proxy at " + targetProxyUrl)
+	if proxyLogin != nil && *proxyLogin != "" {
+		fmt.Println("Using user account", *proxyLogin)
 	}
 
 	proxy.Tr.Proxy = func(req *http.Request) (*url.URL, error) {
