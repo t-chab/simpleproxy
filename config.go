@@ -1,17 +1,12 @@
 package main
 
 import (
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"log"
 	"os"
 	"os/user"
 	"path"
 )
-
-const AppName string = "simple-proxy"
-
-const ConfigFileName = AppName + ".yml"
 
 type ProxyConfig struct {
 	proxyLogin      string
@@ -23,13 +18,17 @@ type ProxyConfig struct {
 	logVerbose      bool
 }
 
-const LOGIN = "proxyLogin"
-const PASSWORD = "proxyPassword"
-const ListenAddr = "listenAddress"
-const ListenPort = "listenPort"
-const ProxyHost = "targetProxyHost"
-const ProxyPort = "targetProxyPort"
-const VerboseLog = "logVerbose"
+const (
+	AppName        string = "simple-proxy"
+	ConfigFileName        = AppName + ".yml"
+	LOGIN                 = "proxyLogin"
+	PASSWORD              = "proxyPassword"
+	ListenAddr            = "listenAddress"
+	ListenPort            = "listenPort"
+	ProxyHost             = "targetProxyHost"
+	ProxyPort             = "targetProxyPort"
+	VerboseLog            = "logVerbose"
+)
 
 func getHomeDirectory() string {
 	usr, err := user.Current()
@@ -56,6 +55,7 @@ func getProxyCredentials() (string, string) {
 }
 
 func getProxyConfig() ProxyConfig {
+	loadConfiguration()
 	return ProxyConfig{
 		proxyLogin:      viper.GetString(LOGIN),
 		proxyPassword:   viper.GetString(PASSWORD),
@@ -99,13 +99,14 @@ func loadConfiguration() {
 			log.Fatal("Fatal error when reading configuration file", err)
 		}
 	}
-
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Printf("%s - Config file changed. Reloading ...", e.Name)
-		err := viper.ReadInConfig() // Find and read the config file
-		if err != nil {             // Handle errors reading the config file
-			log.Fatalf("Fatal error reading config file: %s", err)
-		}
-	})
+	/*
+		viper.WatchConfig()
+		viper.OnConfigChange(func(e fsnotify.Event) {
+			log.Printf("%s - Config file changed. Reloading ...", e.Name)
+			err := viper.ReadInConfig() // Find and read the config file
+			if err != nil {             // Handle errors reading the config file
+				log.Fatalf("Fatal error reading config file: %s", err)
+			}
+		})
+	*/
 }
