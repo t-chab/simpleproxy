@@ -77,7 +77,7 @@ func loadConfiguration() {
 	viper.SetDefault(PASSWORD, "")
 	viper.SetDefault(VerboseLog, false)
 	viper.AddConfigPath(getConfigPath())
-	viper.SetConfigName(ConfigFileName)
+	viper.SetConfigName(AppName)
 	if err := viper.ReadInConfig(); err != nil { // Find and read the config file
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; ignore error if desired
