@@ -99,14 +99,4 @@ func loadConfiguration() {
 			log.Fatal("Fatal error when reading configuration file", err)
 		}
 	}
-	/*
-		viper.WatchConfig()
-		viper.OnConfigChange(func(e fsnotify.Event) {
-			log.Printf("%s - Config file changed. Reloading ...", e.Name)
-			err := viper.ReadInConfig() // Find and read the config file
-			if err != nil {             // Handle errors reading the config file
-				log.Fatalf("Fatal error reading config file: %s", err)
-			}
-		})
-	*/
 }
