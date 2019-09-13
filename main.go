@@ -2,11 +2,12 @@ package main
 
 import (
 	"github.com/getlantern/systray"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/skratchdot/open-golang/open"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const (
@@ -21,9 +22,13 @@ func main() {
 func startHttpServer() *http.Server {
 	addr, proxy := getProxyHandler()
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: proxy,
+		Addr:         addr,
+		Handler:      proxy,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 20 * time.Second,
 	}
+
+	srv.SetKeepAlivesEnabled(false)
 
 	// returns ErrServerClosed on graceful close
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
@@ -47,7 +52,7 @@ func exitApp() {
 }
 
 func onReady() {
-	systray.SetIcon(getIcon("assets/simple-proxy.ico"))
+	systray.SetIcon(getIcon())
 	systray.SetTooltip("simple-proxy")
 	go startHttpServer()
 
@@ -71,10 +76,14 @@ func onExit() {
 	// Cleaning stuff here.
 }
 
-func getIcon(s string) []byte {
-	b, err := ioutil.ReadFile(s)
+func getIcon() []byte {
+	// set up a new box by giving it a (relative) path to a folder on disk:
+	box := packr.New("assets", "./assets")
+
+	// Get the []byte representation of a file, or an error if it doesn't exist:
+	ico, err := box.Find("simple-proxy.ico")
 	if err != nil {
 		log.Fatal(err)
 	}
-	return b
+	return ico
 }
