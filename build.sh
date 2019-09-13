@@ -8,8 +8,8 @@ GOROOT=$HOME/apps/sdk/go1.13
 
 PATH=$GOROOT/bin:$PATH
 
-#WIN_FLAGS="-ldflags -H=windowsgui"
-WIN_FLAGS=""
+WIN_FLAGS="-ldflags -H=windowsgui"
+#WIN_FLAGS=""
 
 go get -u github.com/konsorten/go-windows-terminal-sequences
 go get -u github.com/gobuffalo/packr/v2/packr2

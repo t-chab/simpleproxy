@@ -27,12 +27,9 @@ func getTargetProxyUrl(host string, port int) string {
 }
 
 func setUpTargetProxy(config ProxyConfig, proxy *goproxy.ProxyHttpServer) {
-	var login string
-	var password string
-	if config.proxyLogin == "" {
-		log.Println("Empty credentials, trying to automatically find them from ~/.netrc file ...")
-		login, password = getProxyCredentials()
-	}
+	login := config.proxyLogin
+	password := config.proxyPassword
+
 	targetProxyUrl := getTargetProxyUrl(config.targetProxyHost, config.targetProxyPort)
 	log.Println("Forwarding queries to proxy at ", targetProxyUrl)
 	if login != "" {
