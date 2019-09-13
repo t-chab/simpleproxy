@@ -3,10 +3,11 @@
 # Project is expected to be in $GOPATH/src/project-name
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 GOPATH="$(readlink -f "${CURRENT_DIR}"/../../)"
+export GOPATH
 
 GOROOT=$HOME/apps/sdk/go1.13
 
-PATH=$GOROOT/bin:$PATH
+PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
 WIN_FLAGS="-ldflags -H=windowsgui"
 #WIN_FLAGS=""
@@ -21,4 +22,4 @@ packr2
 env GOOS=linux GOARCH=amd64 go build simple-proxy
 env GOOS=linux GOARCH=arm64 go build simple-proxy
 env GOOS=darwin GOARCH=amd64 go build simple-proxy
-env GOOS=windows GOARCH=amd64 go build ${WIN_FLAGS} simple-proxy
+env GOOS=windows GOARCH=amd64 go build "${WIN_FLAGS}" simple-proxy
