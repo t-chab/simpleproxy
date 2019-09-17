@@ -1,3 +1,5 @@
 *.idea
 *.iml
 *-packr.go
+simple-proxy
+simple-proxy.exe
