@@ -24,11 +24,9 @@ func startHttpServer() *http.Server {
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      proxy,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 20 * time.Second,
+		ReadTimeout:  60 * time.Second,
+		WriteTimeout: 90 * time.Second,
 	}
-
-	srv.SetKeepAlivesEnabled(false)
 
 	// returns ErrServerClosed on graceful close
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
