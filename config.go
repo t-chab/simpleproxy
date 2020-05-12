@@ -1,11 +1,14 @@
 package main
 
 import (
+	"flag"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"log"
 	"os"
 	"os/user"
 	"path"
+	"strings"
 )
 
 type ProxyConfig struct {
@@ -68,16 +71,47 @@ func getProxyConfig() ProxyConfig {
 }
 
 func loadConfiguration() {
+	envPrefix := strings.Replace(AppName, "-", "_", -1)
+	defaultListenAddr := "127.0.0.1"
+	defaultListenPort := 8118
+	defaultProxyHost := ""
+	defaultProxyPort := 8000
+	defautlLogin := ""
+	defaultPassword := ""
+	defaultVerboseLogging := false
 	viper.SetConfigType("yml")
-	viper.SetDefault(ListenAddr, "127.0.0.1")
-	viper.SetDefault(ListenPort, 8118)
-	viper.SetDefault(ProxyHost, "")
-	viper.SetDefault(ProxyPort, 8000)
-	viper.SetDefault(LOGIN, "")
-	viper.SetDefault(PASSWORD, "")
-	viper.SetDefault(VerboseLog, false)
+	viper.AutomaticEnv()
+	viper.SetDefault(ListenAddr, defaultListenAddr)
+	viper.SetDefault(ListenPort, defaultListenPort)
+	viper.SetDefault(ProxyHost, defaultProxyHost)
+	viper.SetDefault(ProxyPort, defaultProxyPort)
+	viper.SetDefault(LOGIN, defautlLogin)
+	viper.SetDefault(PASSWORD, defaultPassword)
+	viper.SetDefault(VerboseLog, defaultVerboseLogging)
 	viper.AddConfigPath(getConfigPath())
 	viper.SetConfigName(AppName)
+	viper.SetEnvPrefix(envPrefix)
+
+	// Read command line flags
+	flag.String(ListenAddr, defaultListenAddr,
+		"Hostname or ip address used to listen for incoming connections.")
+	flag.Int(ListenPort, defaultListenPort,
+		"TCP port used to listen for incoming connections.")
+	flag.String(ProxyHost, defaultProxyHost,
+		"Hostname or ip address of the target proxy where the queries will be forwarded.")
+	flag.Int(ProxyPort, defaultProxyPort,
+		"Port number of the target proxy where the queries will be forwarded.")
+	flag.String(LOGIN, defautlLogin,
+		"Login to use for proxy auth.")
+	flag.String(PASSWORD, defaultPassword,
+		"Login to use for proxy auth.")
+	flag.Bool(VerboseLog, defaultVerboseLogging, "Verbose logging. Default to false.")
+
+	// Override config with command line args
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
+
 	if err := viper.ReadInConfig(); err != nil { // Find and read the config file
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; ignore error if desired

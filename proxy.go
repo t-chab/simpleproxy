@@ -11,6 +11,7 @@ import (
 )
 
 const ProxyAuthHeader = "Proxy-Authorization"
+const DefaultUserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
 
 func setBasicAuth(username, password string, req *http.Request) {
 	if username != "" {
@@ -41,8 +42,13 @@ func setUpTargetProxy(config ProxyConfig, proxy *goproxy.ProxyHttpServer) {
 	}
 	connectReqHandler := func(req *http.Request) {
 		setBasicAuth(login, password, req)
+		if req.UserAgent() == "" {
+			fmt.Println("No User-Agent found, using default ", DefaultUserAgent)
+			req.Header.Set("User-Agent", DefaultUserAgent)
+		}
 	}
 	proxy.ConnectDial = proxy.NewConnectDialToProxyWithHandler(targetProxyUrl, connectReqHandler)
+	proxy.Verbose = config.logVerbose
 }
 
 func getProxyHandler() (string, *goproxy.ProxyHttpServer) {
