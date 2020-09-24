@@ -51,14 +51,14 @@ func setUpTargetProxy(config ProxyConfig, proxy *goproxy.ProxyHttpServer) {
 	proxy.Verbose = config.logVerbose
 }
 
-func getProxyHandler() (string, *goproxy.ProxyHttpServer) {
+func getProxyHandler(enableForward bool) (string, *goproxy.ProxyHttpServer) {
 	proxyConfig := getProxyConfig()
 
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = proxyConfig.logVerbose
 
-	if proxyConfig.targetProxyHost == "" {
-		log.Println("No target proxy host defined. Will act as a simple proxy ...")
+	if proxyConfig.targetProxyHost == "" || !enableForward {
+		log.Println("No target proxy host defined or forward disabled. Will act as a simple proxy ...")
 	} else {
 		setUpTargetProxy(proxyConfig, proxy)
 	}

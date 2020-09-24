@@ -2,4 +2,4 @@
 dist/
 *.iml
 *.syso
-*-packr.go
+binclude.go

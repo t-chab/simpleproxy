@@ -1,10 +1,12 @@
 package main
 
+//go:generate binclude
+
 import (
 	"context"
 	"github.com/getlantern/systray"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/skratchdot/open-golang/open"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -18,16 +20,11 @@ const (
 func main() {
 	cmdLineFlags(NewDefaultValues())
 	go systray.Run(onReady, onExit)
-	for {
-		log.Printf("simple-proxy started !")
-		c := make(chan int)
-		<-c
-	}
-	log.Printf("simple-proxy quits.")
 }
 
-func startHttpServer() *http.Server {
-	addr, proxy := getProxyHandler()
+// Start httpServer, and set forwarding according to boolean status.
+func startHttpServer(forwarding bool) *http.Server {
+	addr, proxy := getProxyHandler(forwarding)
 	var srv = &http.Server{
 		Addr:         addr,
 		Handler:      proxy,
@@ -42,7 +39,9 @@ func startHttpServer() *http.Server {
 }
 
 func stopHttpServer(srv *http.Server) {
-	srv.Shutdown(context.Background())
+	if err := srv.Shutdown(context.Background()); err != nil {
+		log.Panicf("Error: %s", err)
+	}
 }
 
 func configure() {
@@ -63,7 +62,7 @@ func onReady() {
 	systray.SetTooltip("simple-proxy")
 	mConfigure := systray.AddMenuItem("Configure", "Configure simple-proxy")
 	systray.AddSeparator()
-	mRefresh := systray.AddMenuItem("Refresh", "Reload config and restart simple-proxy")
+	mForward := systray.AddMenuItem("Forward", "Reload config and restart simple-proxy")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Exit application")
 	var srv = &http.Server{}
@@ -72,10 +71,17 @@ func onReady() {
 		case <-mConfigure.ClickedCh:
 			log.Printf("Configure option clicked.")
 			configure()
-		case <-mRefresh.ClickedCh:
-			log.Printf("Refresh option clicked.")
+		case <-mForward.ClickedCh:
+			forwardingStatus := mForward.Checked()
+			if forwardingStatus {
+				log.Printf("Disabling forwarding ...")
+				mForward.Uncheck()
+			} else {
+				log.Printf("Enabling forwarding.")
+				mForward.Check()
+			}
 			stopHttpServer(srv)
-			srv = startHttpServer()
+			srv = startHttpServer(false)
 		case <-mQuit.ClickedCh:
 			log.Printf("Quit option clicked.")
 			exitApp()
@@ -89,13 +95,15 @@ func onExit() {
 }
 
 func getIcon() []byte {
-	// set up a new box by giving it a (relative) path to a folder on disk:
-	box := packr.New("assets", "./assets")
-
-	// Get the []byte representation of a file, or an error if it doesn't exist:
-	ico, err := box.Find("simple-proxy.ico")
+	filePath := "./assets/simple-proxy.ico"
+	f, err := BinFS.Open(filePath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Can't open icon file: %s", err)
 	}
-	return ico
+	out, err := ioutil.ReadAll(f)
+	if err != nil {
+
+		log.Fatalf("Can't read icon file: %s", err)
+	}
+	return out
 }

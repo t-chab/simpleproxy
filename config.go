@@ -36,10 +36,10 @@ const (
 type DefaultValues struct {
 	listenAddr string
 	listenPort int
-	proxyHost string
-	proxyPort int
-	login string
-	password string
+	proxyHost  string
+	proxyPort  int
+	login      string
+	password   string
 }
 
 func NewDefaultValues() DefaultValues {
