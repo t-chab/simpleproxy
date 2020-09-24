@@ -8,6 +8,8 @@ set -euo pipefail
 
 GOPATH=$(go env GOPATH)
 
+QTTOOLDIR="/usr/lib/qt5/bin"
+QTLIBDIR="/usr/lib/x86_64-linux-gnu"
 QT_PKG_CONFIG=true
 
 # For linux be sure to have libgtk-3-dev and libappindicator3-dev installed
