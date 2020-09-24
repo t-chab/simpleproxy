@@ -33,6 +33,26 @@ const (
 	VerboseLog            = "logVerbose"
 )
 
+type DefaultValues struct {
+	listenAddr string
+	listenPort int
+	proxyHost string
+	proxyPort int
+	login string
+	password string
+}
+
+func NewDefaultValues() DefaultValues {
+	defaultValues := DefaultValues{}
+	defaultValues.listenAddr = "127.0.0.1"
+	defaultValues.listenPort = 8118
+	defaultValues.proxyHost = ""
+	defaultValues.proxyPort = 8000
+	defaultValues.login = ""
+	defaultValues.password = ""
+	return defaultValues
+}
+
 func getHomeDirectory() string {
 	usr, err := user.Current()
 	if err != nil {
@@ -53,12 +73,8 @@ func getConfigFilePath() string {
 	return path.Join(getConfigPath(), ConfigFileName)
 }
 
-func getProxyCredentials() (string, string) {
-	return viper.GetString("proxyLogin"), viper.GetString("proxyPassword")
-}
-
 func getProxyConfig() ProxyConfig {
-	loadConfiguration()
+	loadConfiguration(NewDefaultValues())
 	return ProxyConfig{
 		proxyLogin:      viper.GetString(LOGIN),
 		proxyPassword:   viper.GetString(PASSWORD),
@@ -70,47 +86,20 @@ func getProxyConfig() ProxyConfig {
 	}
 }
 
-func loadConfiguration() {
+func loadConfiguration(values DefaultValues) {
 	envPrefix := strings.Replace(AppName, "-", "_", -1)
-	defaultListenAddr := "127.0.0.1"
-	defaultListenPort := 8118
-	defaultProxyHost := ""
-	defaultProxyPort := 8000
-	defautlLogin := ""
-	defaultPassword := ""
-	defaultVerboseLogging := false
 	viper.SetConfigType("yml")
 	viper.AutomaticEnv()
-	viper.SetDefault(ListenAddr, defaultListenAddr)
-	viper.SetDefault(ListenPort, defaultListenPort)
-	viper.SetDefault(ProxyHost, defaultProxyHost)
-	viper.SetDefault(ProxyPort, defaultProxyPort)
-	viper.SetDefault(LOGIN, defautlLogin)
-	viper.SetDefault(PASSWORD, defaultPassword)
-	viper.SetDefault(VerboseLog, defaultVerboseLogging)
+	viper.SetDefault(ListenAddr, values.listenAddr)
+	viper.SetDefault(ListenPort, values.listenPort)
+	viper.SetDefault(ProxyHost, values.proxyHost)
+	viper.SetDefault(ProxyPort, values.proxyPort)
+	viper.SetDefault(LOGIN, values.login)
+	viper.SetDefault(PASSWORD, values.password)
+	viper.SetDefault(VerboseLog, false)
 	viper.AddConfigPath(getConfigPath())
 	viper.SetConfigName(AppName)
 	viper.SetEnvPrefix(envPrefix)
-
-	// Read command line flags
-	flag.String(ListenAddr, defaultListenAddr,
-		"Hostname or ip address used to listen for incoming connections.")
-	flag.Int(ListenPort, defaultListenPort,
-		"TCP port used to listen for incoming connections.")
-	flag.String(ProxyHost, defaultProxyHost,
-		"Hostname or ip address of the target proxy where the queries will be forwarded.")
-	flag.Int(ProxyPort, defaultProxyPort,
-		"Port number of the target proxy where the queries will be forwarded.")
-	flag.String(LOGIN, defautlLogin,
-		"Login to use for proxy auth.")
-	flag.String(PASSWORD, defaultPassword,
-		"Login to use for proxy auth.")
-	flag.Bool(VerboseLog, defaultVerboseLogging, "Verbose logging. Default to false.")
-
-	// Override config with command line args
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.Parse()
-	viper.BindPFlags(pflag.CommandLine)
 
 	if err := viper.ReadInConfig(); err != nil { // Find and read the config file
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -132,5 +121,30 @@ func loadConfiguration() {
 			// Config file was found but another error was produced
 			log.Fatal("Fatal error when reading configuration file", err)
 		}
+	}
+}
+
+func cmdLineFlags(defaultValues DefaultValues) {
+	// Read command line flags
+	flag.String(ListenAddr, defaultValues.listenAddr,
+		"Hostname or ip address used to listen for incoming connections.")
+	flag.Int(ListenPort, defaultValues.listenPort,
+		"TCP port used to listen for incoming connections.")
+	flag.String(ProxyHost, defaultValues.proxyHost,
+		"Hostname or ip address of the target proxy where the queries will be forwarded.")
+	flag.Int(ProxyPort, defaultValues.proxyPort,
+		"Port number of the target proxy where the queries will be forwarded.")
+	flag.String(LOGIN, defaultValues.login,
+		"Login to use for proxy auth.")
+	flag.String(PASSWORD, defaultValues.password,
+		"Login to use for proxy auth.")
+	flag.Bool(VerboseLog, false, "Verbose logging. Default to false.")
+
+	// Override config with command line args
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	errBindFlags := viper.BindPFlags(pflag.CommandLine)
+	if errBindFlags != nil {
+		log.Fatal("Failed to bind command line parameters to configuration", errBindFlags)
 	}
 }

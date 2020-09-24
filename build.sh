@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Project is expected to be in $GOPATH/src/project-name
+# Project is expected to be in $GO_PATH/src/project-name
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-GOPATH="$(readlink -f "${CURRENT_DIR}"/../../)"
-export GOPATH
+GO_PATH="$(readlink -f "${CURRENT_DIR}"/../../)"
+export GO_PATH
 
-GOROOT=$HOME/apps/sdk/go
-PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+GO_ROOT=$HOME/apps/sdk/go
+PATH=$GO_PATH/bin:$GO_ROOT/bin:$PATH
 
 BUILD_DIR="${CURRENT_DIR}/dist"
 if [[ -d "${BUILD_DIR}" ]]; then
