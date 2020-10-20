@@ -2,4 +2,4 @@
 dist/
 *.iml
 *.syso
-binclude.go
+simpleproxy_ico.go
