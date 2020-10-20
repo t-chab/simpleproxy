@@ -22,7 +22,7 @@ type ProxyConfig struct {
 }
 
 const (
-	AppName        string = "simple-proxy"
+	AppName        string = "simpleproxy"
 	ConfigFileName        = AppName + ".yml"
 	LOGIN                 = "proxyLogin"
 	PASSWORD              = "proxyPassword"

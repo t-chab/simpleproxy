@@ -1,12 +1,12 @@
 package main
 
-//go:generate binclude
+//go:generate go get github.com/dim13/file2go
+//go:generate file2go -in ./assets/simpleproxy.ico
 
 import (
 	"context"
 	"github.com/getlantern/systray"
 	"github.com/skratchdot/open-golang/open"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -19,7 +19,7 @@ const (
 
 func main() {
 	cmdLineFlags(NewDefaultValues())
-	go systray.Run(onReady, onExit)
+	systray.Run(onReady, onExit)
 }
 
 // Start httpServer, and set forwarding according to boolean status.
@@ -95,15 +95,5 @@ func onExit() {
 }
 
 func getIcon() []byte {
-	filePath := "./assets/simple-proxy.ico"
-	f, err := BinFS.Open(filePath)
-	if err != nil {
-		log.Fatalf("Can't open icon file: %s", err)
-	}
-	out, err := ioutil.ReadAll(f)
-	if err != nil {
-
-		log.Fatalf("Can't read icon file: %s", err)
-	}
-	return out
+	return SimpleproxyIco
 }
