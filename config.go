@@ -2,35 +2,38 @@ package main
 
 import (
 	"flag"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"os/user"
 	"path"
 	"strings"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 type ProxyConfig struct {
-	proxyLogin      string
-	proxyPassword   string
-	listenAddress   string
-	listenPort      int
-	targetProxyHost string
-	targetProxyPort int
-	logVerbose      bool
+	proxyLogin       string
+	proxyPassword    string
+	listenAddress    string
+	listenPort       int
+	targetProxyHost  string
+	targetProxyPort  int
+	logVerbose       bool
+	forwardingStatus bool
 }
 
 const (
-	AppName        string = "simpleproxy"
-	ConfigFileName        = AppName + ".yml"
-	LOGIN                 = "proxyLogin"
-	PASSWORD              = "proxyPassword"
-	ListenAddr            = "listenAddress"
-	ListenPort            = "listenPort"
-	ProxyHost             = "targetProxyHost"
-	ProxyPort             = "targetProxyPort"
-	VerboseLog            = "logVerbose"
+	AppName          string = "simpleproxy"
+	ConfigFileName          = AppName + ".yml"
+	LOGIN                   = "proxyLogin"
+	PASSWORD                = "proxyPassword"
+	ListenAddr              = "listenAddress"
+	ListenPort              = "listenPort"
+	ProxyHost               = "targetProxyHost"
+	ProxyPort               = "targetProxyPort"
+	VerboseLog              = "logVerbose"
+	ForwardingStatus        = "ForwardingStatus"
 )
 
 type DefaultValues struct {
@@ -50,6 +53,7 @@ func NewDefaultValues() DefaultValues {
 	defaultValues.proxyPort = 8000
 	defaultValues.login = ""
 	defaultValues.password = ""
+
 	return defaultValues
 }
 
@@ -58,6 +62,7 @@ func getHomeDirectory() string {
 	if err != nil {
 		log.Fatal("Error getting current user :", err)
 	}
+
 	return usr.HomeDir
 }
 
@@ -66,6 +71,7 @@ func getConfigPath() string {
 	if ok {
 		return path.Join(val, AppName)
 	}
+
 	return path.Join(getHomeDirectory(), ".config", AppName)
 }
 
@@ -76,18 +82,19 @@ func getConfigFilePath() string {
 func getProxyConfig() ProxyConfig {
 	loadConfiguration(NewDefaultValues())
 	return ProxyConfig{
-		proxyLogin:      viper.GetString(LOGIN),
-		proxyPassword:   viper.GetString(PASSWORD),
-		listenAddress:   viper.GetString(ListenAddr),
-		listenPort:      viper.GetInt(ListenPort),
-		targetProxyHost: viper.GetString(ProxyHost),
-		targetProxyPort: viper.GetInt(ProxyPort),
-		logVerbose:      viper.GetBool(VerboseLog),
+		proxyLogin:       viper.GetString(LOGIN),
+		proxyPassword:    viper.GetString(PASSWORD),
+		listenAddress:    viper.GetString(ListenAddr),
+		listenPort:       viper.GetInt(ListenPort),
+		targetProxyHost:  viper.GetString(ProxyHost),
+		targetProxyPort:  viper.GetInt(ProxyPort),
+		forwardingStatus: viper.GetBool(ForwardingStatus),
+		logVerbose:       viper.GetBool(VerboseLog),
 	}
 }
 
 func loadConfiguration(values DefaultValues) {
-	envPrefix := strings.Replace(AppName, "-", "_", -1)
+	envPrefix := strings.ReplaceAll(AppName, "-", "_")
 	viper.SetConfigType("yml")
 	viper.AutomaticEnv()
 	viper.SetDefault(ListenAddr, values.listenAddr)
@@ -103,17 +110,19 @@ func loadConfiguration(values DefaultValues) {
 
 	if err := viper.ReadInConfig(); err != nil { // Find and read the config file
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found; ignore error if desired
 			log.Printf("Configuration file not found in %s, a new file will be created.", getConfigFilePath())
+
+			// Config file not found; ignore error if desired
 			errDir := os.MkdirAll(getConfigPath(), os.ModePerm)
+			_, errFile := os.Create(getConfigFilePath())
+			confError := viper.WriteConfigAs(getConfigFilePath())
+
 			if errDir != nil {
 				log.Fatalf("Failed to create %s", getConfigPath())
 			}
-			_, errFile := os.Create(getConfigFilePath())
 			if errFile != nil {
 				log.Fatalf("Failed to create %s", getConfigFilePath())
 			}
-			confError := viper.WriteConfigAs(getConfigFilePath())
 			if confError != nil {
 				log.Fatalf("Can't write configuration file : %s", confError)
 			}
@@ -124,6 +133,7 @@ func loadConfiguration(values DefaultValues) {
 	}
 }
 
+// Read command line flags and override current config if needed.
 func cmdLineFlags(defaultValues DefaultValues) {
 	// Read command line flags
 	flag.String(ListenAddr, defaultValues.listenAddr,

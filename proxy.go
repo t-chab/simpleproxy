@@ -3,15 +3,19 @@ package main
 import (
 	b64 "encoding/base64"
 	"fmt"
-	"github.com/elazarl/goproxy"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/elazarl/goproxy"
 )
 
-const ProxyAuthHeader = "Proxy-Authorization"
-const DefaultUserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+const (
+	ProxyAuthHeader  = "Proxy-Authorization"
+	DefaultUserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 " +
+		"(KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+)
 
 func setBasicAuth(username, password string, req *http.Request) {
 	if username != "" {
@@ -23,7 +27,7 @@ func basicAuth(username, password string) string {
 	return b64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 }
 
-func getTargetProxyUrl(host string, port int) string {
+func getTargetProxyURL(host string, port int) string {
 	return "http://" + host + ":" + strconv.Itoa(port)
 }
 
@@ -31,14 +35,15 @@ func setUpTargetProxy(config ProxyConfig, proxy *goproxy.ProxyHttpServer) {
 	login := config.proxyLogin
 	password := config.proxyPassword
 
-	targetProxyUrl := getTargetProxyUrl(config.targetProxyHost, config.targetProxyPort)
-	log.Println("Forwarding queries to proxy at ", targetProxyUrl)
+	targetProxyURL := getTargetProxyURL(config.targetProxyHost, config.targetProxyPort)
+	log.Println("Forwarding queries to proxy at ", targetProxyURL)
 	if login != "" {
 		fmt.Println("Using user account", login)
 	}
 	proxy.Tr.Proxy = func(req *http.Request) (*url.URL, error) {
 		setBasicAuth(login, password, req)
-		return url.Parse(getTargetProxyUrl(config.targetProxyHost, config.targetProxyPort))
+
+		return url.Parse(getTargetProxyURL(config.targetProxyHost, config.targetProxyPort))
 	}
 	connectReqHandler := func(req *http.Request) {
 		setBasicAuth(login, password, req)
@@ -47,7 +52,7 @@ func setUpTargetProxy(config ProxyConfig, proxy *goproxy.ProxyHttpServer) {
 			req.Header.Set("User-Agent", DefaultUserAgent)
 		}
 	}
-	proxy.ConnectDial = proxy.NewConnectDialToProxyWithHandler(targetProxyUrl, connectReqHandler)
+	proxy.ConnectDial = proxy.NewConnectDialToProxyWithHandler(targetProxyURL, connectReqHandler)
 	proxy.Verbose = config.logVerbose
 }
 

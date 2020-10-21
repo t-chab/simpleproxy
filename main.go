@@ -5,12 +5,13 @@ package main
 
 import (
 	"context"
-	"github.com/getlantern/systray"
-	"github.com/skratchdot/open-golang/open"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/getlantern/systray"
+	"github.com/skratchdot/open-golang/open"
 )
 
 const (
@@ -19,17 +20,33 @@ const (
 
 func main() {
 	cmdLineFlags(NewDefaultValues())
+	// to create file if it doesn't exists
+	if !fileExists(getConfigFilePath()) {
+		getProxyConfig()
+	}
 	systray.Run(onReady, onExit)
 }
 
+// fileExists checks if a file exists and is not a directory before we
+// try using it to prevent further errors.
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
 // Start httpServer, and set forwarding according to boolean status.
-func startHttpServer(forwarding bool) *http.Server {
+func startHTTPServer(forwarding bool) *http.Server {
 	addr, proxy := getProxyHandler(forwarding)
-	var srv = &http.Server{
+	const WriteTimeout = 90
+	const ReadTimeout = 60
+	srv := &http.Server{
 		Addr:         addr,
 		Handler:      proxy,
-		ReadTimeout:  60 * time.Second,
-		WriteTimeout: 90 * time.Second,
+		ReadTimeout:  ReadTimeout * time.Second,
+		WriteTimeout: WriteTimeout * time.Second,
 	} // returns ErrServerClosed on graceful close
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Printf("Error: %s", err)
@@ -38,7 +55,7 @@ func startHttpServer(forwarding bool) *http.Server {
 	return srv
 }
 
-func stopHttpServer(srv *http.Server) {
+func stopHTTPServer(srv *http.Server) {
 	if err := srv.Shutdown(context.Background()); err != nil {
 		log.Panicf("Error: %s", err)
 	}
@@ -65,13 +82,21 @@ func onReady() {
 	mForward := systray.AddMenuItem("Forward", "Reload config and restart simple-proxy")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Exit application")
-	var srv = &http.Server{}
+	srv := &http.Server{}
 	for {
 		select {
+
 		case <-mConfigure.ClickedCh:
+
 			log.Printf("Configure option clicked.")
+			stopHTTPServer(srv)
 			configure()
+			newConfiguration := getProxyConfig()
+			srv = startHTTPServer(newConfiguration.forwardingStatus)
+			break
+
 		case <-mForward.ClickedCh:
+
 			forwardingStatus := mForward.Checked()
 			if forwardingStatus {
 				log.Printf("Disabling forwarding ...")
@@ -80,12 +105,17 @@ func onReady() {
 				log.Printf("Enabling forwarding.")
 				mForward.Check()
 			}
-			stopHttpServer(srv)
-			srv = startHttpServer(false)
+
+			stopHTTPServer(srv)
+			srv = startHTTPServer(forwardingStatus)
+			break
+
 		case <-mQuit.ClickedCh:
+
 			log.Printf("Quit option clicked.")
+			stopHTTPServer(srv)
 			exitApp()
-			return
+			break
 		}
 	}
 }
