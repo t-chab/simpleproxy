@@ -1,18 +1,21 @@
 package main
 
-//go:generate go get github.com/dim13/file2go
-//go:generate file2go -in ./assets/simpleproxy.ico
-
 import (
-	"context"
+	_ "embed"
+	"github.com/getlantern/systray"
+	"github.com/skratchdot/open-golang/open"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/getlantern/systray"
-	"github.com/skratchdot/open-golang/open"
 )
+
+import (
+	"context"
+)
+
+//go:embed assets/simpleproxy.png
+var SimpleproxyIco []byte
 
 const (
 	SuccessExitCode int = 0
