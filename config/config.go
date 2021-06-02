@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"flag"
@@ -13,19 +13,19 @@ import (
 )
 
 type ProxyConfig struct {
-	proxyLogin       string
-	proxyPassword    string
-	listenAddress    string
-	listenPort       int
-	targetProxyHost  string
-	targetProxyPort  int
-	logVerbose       bool
-	forwardingStatus bool
+	ProxyLogin       string
+	ProxyPassword    string
+	ListenAddress    string
+	ListenPort       int
+	TargetProxyHost  string
+	TargetProxyPort  int
+	LogVerbose       bool
+	ForwardingStatus bool
 }
 
 const (
 	AppName          string = "simpleproxy"
-	ConfigFileName          = AppName + ".yml"
+	CfgFileName             = AppName + ".yml"
 	LOGIN                   = "proxyLogin"
 	PASSWORD                = "proxyPassword"
 	ListenAddr              = "listenAddress"
@@ -75,21 +75,21 @@ func getConfigPath() string {
 	return path.Join(getHomeDirectory(), ".config", AppName)
 }
 
-func getConfigFilePath() string {
-	return path.Join(getConfigPath(), ConfigFileName)
+func GetConfigFilePath() string {
+	return path.Join(getConfigPath(), CfgFileName)
 }
 
-func getProxyConfig() ProxyConfig {
+func GetProxyConfig() ProxyConfig {
 	loadConfiguration(NewDefaultValues())
 	return ProxyConfig{
-		proxyLogin:       viper.GetString(LOGIN),
-		proxyPassword:    viper.GetString(PASSWORD),
-		listenAddress:    viper.GetString(ListenAddr),
-		listenPort:       viper.GetInt(ListenPort),
-		targetProxyHost:  viper.GetString(ProxyHost),
-		targetProxyPort:  viper.GetInt(ProxyPort),
-		forwardingStatus: viper.GetBool(ForwardingStatus),
-		logVerbose:       viper.GetBool(VerboseLog),
+		ProxyLogin:       viper.GetString(LOGIN),
+		ProxyPassword:    viper.GetString(PASSWORD),
+		ListenAddress:    viper.GetString(ListenAddr),
+		ListenPort:       viper.GetInt(ListenPort),
+		TargetProxyHost:  viper.GetString(ProxyHost),
+		TargetProxyPort:  viper.GetInt(ProxyPort),
+		ForwardingStatus: viper.GetBool(ForwardingStatus),
+		LogVerbose:       viper.GetBool(VerboseLog),
 	}
 }
 
@@ -110,19 +110,20 @@ func loadConfiguration(values DefaultValues) {
 
 	if err := viper.ReadInConfig(); err != nil { // Find and read the config file
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Printf("Configuration file not found in %s, a new file will be created.", getConfigFilePath())
+			log.Printf("Configuration file not found in %s, a new file will be created.", GetConfigFilePath())
 
 			// Config file not found; ignore error if desired
 			errDir := os.MkdirAll(getConfigPath(), os.ModePerm)
-			_, errFile := os.Create(getConfigFilePath())
-			confError := viper.WriteConfigAs(getConfigFilePath())
-
 			if errDir != nil {
 				log.Fatalf("Failed to create %s", getConfigPath())
 			}
+
+			_, errFile := os.Create(GetConfigFilePath())
 			if errFile != nil {
-				log.Fatalf("Failed to create %s", getConfigFilePath())
+				log.Fatalf("Failed to create %s", GetConfigFilePath())
 			}
+
+			confError := viper.WriteConfigAs(GetConfigFilePath())
 			if confError != nil {
 				log.Fatalf("Can't write configuration file : %s", confError)
 			}
@@ -133,8 +134,8 @@ func loadConfiguration(values DefaultValues) {
 	}
 }
 
-// Read command line flags and override current config if needed.
-func cmdLineFlags(defaultValues DefaultValues) {
+// CmdLineFlags Read command line flags and override current config if needed.
+func CmdLineFlags(defaultValues DefaultValues) {
 	// Read command line flags
 	flag.String(ListenAddr, defaultValues.listenAddr,
 		"Hostname or ip address used to listen for incoming connections.")

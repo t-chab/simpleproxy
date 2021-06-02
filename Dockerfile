@@ -1,4 +1,4 @@
-# Build simple-proxy
+# Build simpleproxy
 FROM golang:1.16 AS builder
 
 ARG GIT_REPO="https://github.com/tchabaud/simple-proxy.git"

@@ -1,25 +1,11 @@
-module simpleproxy
+module github.com/tchabaud/simpleproxy
 
 go 1.16
 
 require (
-	github.com/dim13/file2go v1.0.1 // indirect
-	github.com/elazarl/goproxy v0.0.0-20200809112317-0581fc3aee2d
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/getlantern/golog v0.0.0-20200929154820-62107891371a // indirect
-	github.com/getlantern/ops v0.0.0-20200403153110-8476b16edcd6 // indirect
-	github.com/getlantern/systray v1.0.5
-	github.com/magiconair/properties v1.8.4 // indirect
-	github.com/mitchellh/mapstructure v1.3.3 // indirect
-	github.com/pelletier/go-toml v1.8.1 // indirect
+	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
+	github.com/getlantern/systray v1.1.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/spf13/afero v1.4.1 // indirect
-	github.com/spf13/cast v1.3.1 // indirect
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
-	golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13 // indirect
-	gopkg.in/ini.v1 v1.62.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
-	mvdan.cc/gofumpt v0.0.0-20200927160801-5bfeb2e70dd6 // indirect
 )
