@@ -1,19 +1,13 @@
 package main
 
 import (
-	"context"
 	_ "embed"
-	"fmt"
 	"github.com/getlantern/systray"
 	"github.com/skratchdot/open-golang/open"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"os"
-	"time"
-
 	"github.com/tchabaud/simpleproxy/config"
 	"github.com/tchabaud/simpleproxy/proxy"
+	"log"
+	"os"
 )
 
 //go:embed assets/simpleproxy.ico
@@ -21,6 +15,8 @@ var SimpleProxyIco []byte
 
 //go:embed assets/simpleproxy.png
 var SimpleProxyPng []byte
+
+var proxyInstance proxy.Proxy
 
 const (
 	SuccessExitCode int = 0
@@ -33,8 +29,7 @@ func main() {
 		config.GetProxyConfig()
 	}
 	onExit := func() {
-		now := time.Now()
-		ioutil.WriteFile(fmt.Sprintf(`on_exit_%d.txt`, now.UnixNano()), []byte(now.String()), 0644)
+		log.Println("Thanks for using simple proxy !")
 	}
 	systray.Run(onReady, onExit)
 }
@@ -66,44 +61,41 @@ func onReady() {
 	systray.SetIcon(SimpleProxyIco)
 	systray.SetTemplateIcon(SimpleProxyPng, SimpleProxyIco)
 	systray.SetTooltip("Simple Proxy")
-	mQuit := systray.AddMenuItem("Quit", "Exit application")
+
+	mForward := systray.AddMenuItem("Forward", "Reload config and restart simpleproxy")
 
 	systray.AddSeparator()
 	mConfigure := systray.AddMenuItem("Configure", "Configure simpleproxy")
 
 	systray.AddSeparator()
-	mForward := systray.AddMenuItem("Forward", "Reload config and restart simpleproxy")
+	mQuit := systray.AddMenuItem("Quit", "Exit application")
+
 	go func() {
 		for {
 			select {
 			case <-mConfigure.ClickedCh:
 				log.Printf("Configure option clicked.")
-				stopHTTPServer(srv)
-				configure()
-				newConfiguration := config.GetProxyConfig()
-				srv = startHTTPServer(newConfiguration.ForwardingStatus)
+				//proxyInstance.StopHTTPServer()
+				//configure()
+				//newConfiguration := config.GetProxyConfig()
+				//proxyInstance.StartHTTPServer(newConfiguration.ForwardingStatus)
 
 			case <-mForward.ClickedCh:
 				if mForward.Checked() {
 					log.Printf("Disabling forwarding ...")
 					mForward.Uncheck()
+					mForward.SetTitle("Forward")
 				} else {
 					log.Printf("Enabling forwarding.")
 					mForward.Check()
+					mForward.SetTitle("✅ Forward")
 				}
 
 			case <-mQuit.ClickedCh:
 				log.Printf("Quit option clicked.")
-				stopHTTPServer(srv)
+				proxyInstance.StopHTTPServer()
 				exitApp()
-
-				stopHTTPServer(srv)
-				srv = startHTTPServer(mForward.Checked())
 			}
 		}
 	}()
-}
-
-func onExit() {
-	// Cleaning stuff here.
 }
