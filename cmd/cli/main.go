@@ -8,6 +8,7 @@ import (
 	"github.com/tchabaud/simpleproxy/proxy"
 	"log"
 	"os"
+	"strconv"
 )
 
 //go:embed assets/simpleproxy.ico
@@ -30,6 +31,15 @@ func main() {
 	}
 	onExit := func() {
 		log.Println("Thanks for using simple proxy !")
+	}
+	isForwardingEnabled, err := strconv.ParseBool(config.ForwardingStatus)
+	if err != nil {
+		isForwardingEnabled = false
+	}
+	if isForwardingEnabled {
+		proxyInstance.StartForwardingProxy()
+	} else {
+		proxyInstance.StartStandaloneProxy()
 	}
 	systray.Run(onReady, onExit)
 }
@@ -75,10 +85,10 @@ func onReady() {
 			select {
 			case <-mConfigure.ClickedCh:
 				log.Printf("Configure option clicked.")
-				//proxyInstance.StopHTTPServer()
-				//configure()
-				//newConfiguration := config.GetProxyConfig()
-				//proxyInstance.StartHTTPServer(newConfiguration.ForwardingStatus)
+				proxyInstance.StopProxy()
+				configure()
+				newConfiguration := config.GetProxyConfig()
+				proxyInstance.ResetListener(newConfiguration.ForwardingStatus)
 
 			case <-mForward.ClickedCh:
 				if mForward.Checked() {
@@ -93,7 +103,7 @@ func onReady() {
 
 			case <-mQuit.ClickedCh:
 				log.Printf("Quit option clicked.")
-				proxyInstance.StopHTTPServer()
+				proxyInstance.StopProxy()
 				exitApp()
 			}
 		}
